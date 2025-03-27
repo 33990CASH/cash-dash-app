@@ -10,13 +10,14 @@ app = Dash(__name__)
 # Load data from SQLite
 def load_data():
     try:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        db_path = os.path.join(script_dir, "..", "data", "cape_coral_econ.db")
         if os.getenv("RENDER"):
-            # On Render, src/ is /app, so data/ is one level up
-            db_path = os.path.join("/data", "cape_coral_econ.db")
+            # On Render, the data folder is at /app/data/
+            db_path = "/app/data/cape_coral_econ.db"
             print(f"Render environment detected. Using db_path: {db_path}")
         else:
+            # Local path relative to src/
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            db_path = os.path.join(script_dir, "..", "data", "cape_coral_econ.db")
             print(f"Local environment. Using db_path: {db_path}")
         conn = sqlite3.connect(db_path)
         df_unemployment = pd.read_sql("SELECT * FROM employment", conn)
