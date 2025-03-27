@@ -1,27 +1,31 @@
-import dash
-from dash import dcc, html
-import plotly.express as px
-import pandas as pd
+import os
 import sqlite3
+import pandas as pd
+from dash import dcc, html, Dash
+import plotly.express as px
 
 # Initialize the Dash app
-app = dash.Dash(__name__)
-
+app = Dash(__name__)
 
 # Load data from SQLite
 def load_data():
-    conn = sqlite3.connect("../data/cape_coral_econ.db")
-
-    # Load unemployment data
-    df_unemployment = pd.read_sql("SELECT * FROM employment", conn)
-    df_unemployment['date'] = pd.to_datetime(df_unemployment['date'])
-
-    # Load news data
-    df_news = pd.read_sql("SELECT * FROM news", conn)
-
-    conn.close()
-    return df_unemployment, df_news
-
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        db_path = os.path.join(script_dir, "..", "data", "cape_coral_econ.db")
+        if os.getenv("RENDER"):
+            db_path = "/app/../data/cape_coral_econ.db"
+        conn = sqlite3.connect(db_path)
+        df_unemployment = pd.read_sql("SELECT * FROM employment", conn)
+        df_unemployment['date'] = pd.to_datetime(df_unemployment['date'])
+        df_news = pd.read_sql("SELECT * FROM news", conn)
+        conn.close()
+        return df_unemployment, df_news
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        raise
+    except Exception as e:
+        print(f"Error: {e}")
+        raise
 
 # Load the data
 df_unemployment, df_news = load_data()
@@ -40,7 +44,7 @@ fig_unemployment.update_layout(
     template="plotly_white"
 )
 
-# Create the news table with updated border colors
+# Create the news table
 news_table = html.Table([
     html.Thead(
         html.Tr([
@@ -51,38 +55,30 @@ news_table = html.Table([
     ),
     html.Tbody([
         html.Tr([
-            html.Td(row["news_date"],
-                    style={'color': '#001737', 'borderBottom': '1px solid #001737', 'padding': '10px'}),
-            html.Td(row["headline"],
-                    style={'color': '#001737', 'borderBottom': '1px solid #001737', 'padding': '10px'}),
-            html.Td(row["description"],
-                    style={'color': '#001737', 'borderBottom': '1px solid #001737', 'padding': '10px'})
+            html.Td(row["news_date"], style={'color': '#001737', 'borderBottom': '1px solid #001737', 'padding': '10px'}),
+            html.Td(row["headline"], style={'color': '#001737', 'borderBottom': '1px solid #001737', 'padding': '10px'}),
+            html.Td(row["description"], style={'color': '#001737', 'borderBottom': '1px solid #001737', 'padding': '10px'})
         ]) for _, row in df_news.iterrows()
     ])
 ], style={'width': '100%', 'borderCollapse': 'collapse', 'marginTop': '20px', 'border': '1px solid #001737'})
 
-# Define the layout of the dashboard with the logo centered and larger
+# Define the layout
 app.layout = html.Div([
-    # Logo centered and larger
     html.Div([
         html.Img(
-            src="https://github.com/CASH3990/CASHassets/blob/main/CCASH_logo_banner.png?raw=true",
-            style={
-                'width': '600px',  # Increased size
-                'height': 'auto',
-                'marginBottom': '20px'
-            }
+            src=app.get_asset_url('CCASH_logo_banner.png'),
+            style={'width': '600px', 'height': 'auto', 'marginBottom': '20px'}
         )
-    ], style={'textAlign': 'center'}),  # Center the logo
-    # Dashboard title
+    ], style={'textAlign': 'center'}),
     html.H1("Cape Coral Economic Analysis Dashboard", style={'textAlign': 'center', 'color': '#001737'}),
-    # Unemployment chart
     dcc.Graph(figure=fig_unemployment),
-    # News table
     html.H2("Recent Economic News", style={'color': '#001737', 'marginTop': '40px'}),
     news_table
 ], style={'backgroundColor': '#f0eadc', 'padding': '20px', 'minHeight': '100vh'})
 
+# Define the server for Render
+server = app.server
+
 # Run the app
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)), debug=True)
