@@ -1,4 +1,12 @@
-dash==2.16.1
-plotly==5.20.0
-pandas==2.2.1
+dash==3.0.1
+Flask==3.0.3
+plotly==6.0.1
+pandas==2.2.3
 gunicorn==22.0.0
+beautifulsoup4==4.13.3
+requests==2.32.3
+numpy==2.2.4
+python-dateutil==2.9.0.post0
+pytz==2025.2
+schedule==1.2.2
+python-dotenv==1.1.0
