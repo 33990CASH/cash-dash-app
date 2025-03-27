@@ -1,1 +1,0 @@
-print("Cape Coral Econ Dashboard - Starting Up!")
