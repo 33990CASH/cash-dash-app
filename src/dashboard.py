@@ -9,28 +9,17 @@ app = Dash(__name__)
 
 # Load data from SQLite
 def load_data():
-    try:
-        if os.getenv("RENDER"):
-            # On Render, the data folder is at /app/data/
-            db_path = "/app/data/cape_coral_econ.db"
-            print(f"Render environment detected. Using db_path: {db_path}")
-        else:
-            # Local path relative to src/
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            db_path = os.path.join(script_dir, "..", "data", "cape_coral_econ.db")
-            print(f"Local environment. Using db_path: {db_path}")
-        conn = sqlite3.connect(db_path)
-        df_unemployment = pd.read_sql("SELECT * FROM employment", conn)
-        df_unemployment['date'] = pd.to_datetime(df_unemployment['date'])
-        df_news = pd.read_sql("SELECT * FROM news", conn)
-        conn.close()
-        return df_unemployment, df_news
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        raise
-    except Exception as e:
-        print(f"Error: {e}")
-        raise
+    # Get the directory of the current script (dashboard.py)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Construct the path to the database
+    db_path = os.path.join(script_dir, "data", "cape_coral_econ.db")
+    # Connect to the database
+    conn = sqlite3.connect(db_path)
+    df_unemployment = pd.read_sql("SELECT * FROM employment", conn)
+    df_unemployment['date'] = pd.to_datetime(df_unemployment['date'])
+    df_news = pd.read_sql("SELECT * FROM news", conn)
+    conn.close()
+    return df_unemployment, df_news
 
 # Load the data
 df_unemployment, df_news = load_data()
